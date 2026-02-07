@@ -17,10 +17,7 @@ class ListingImage extends Model
         return $this->belongsTo(Listing::class);
     }
 
-    /**
-     * Get the full URL of the image
-     */
-    public function getImageUrl()
+    public function getUrlAttribute()
     {
         return asset('storage/' . $this->image_path);
     }

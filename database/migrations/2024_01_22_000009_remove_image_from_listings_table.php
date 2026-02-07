@@ -1,22 +1,3 @@
 <?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up()
-    {
-        Schema::table('listings', function (Blueprint $table) {
-            $table->dropColumn('image');
-        });
-    }
-
-    public function down()
-    {
-        Schema::table('listings', function (Blueprint $table) {
-            $table->string('image')->nullable();
-        });
-    }
-};
+// This migration file has been removed as it's no longer needed.
+// The project now uses only the listing_images table for all images.

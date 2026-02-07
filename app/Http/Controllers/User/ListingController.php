@@ -19,7 +19,7 @@ class ListingController extends Controller
 
         $listings = Listing::where('user_id', session('user_id'))
             ->with(['category', 'images'])
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->paginate(10);
 
         return view('user.listings.index', compact('listings'));
@@ -51,30 +51,26 @@ class ListingController extends Controller
             'email' => 'nullable|email|max:255',
             'website' => 'nullable|url|max:255',
             'images.*' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
-        ], [
-            'images.*.image' => 'Secila foto duhet të jetë në formatin JPG, PNG ose WEBP.',
-            'images.*.max' => 'Secila foto nuk duhet të kalojë 2MB.',
         ]);
 
-        $validated['user_id'] = session('user_id');
-        $validated['status'] = 'pending';
+        $listing = Listing::create([
+            ...$validated,
+            'user_id' => session('user_id'),
+            'status' => 'pending',
+        ]);
 
-        $listing = Listing::create($validated);
-
-        // Handle multiple images - first image becomes main/cover image
         if ($request->hasFile('images')) {
-            $order = 0;
-            foreach ($request->file('images') as $image) {
-                $imagePath = $image->store('listings', 'public');
-                ListingImage::create([
-                    'listing_id' => $listing->id,
-                    'image_path' => $imagePath,
-                    'order' => $order++,
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('listings', 'public');
+                $listing->images()->create([
+                    'image_path' => $path,
+                    'order' => $index,
                 ]);
             }
         }
 
-        return redirect()->route('user.listings.index')
+        return redirect()
+            ->route('user.listings.index')
             ->with('success', 'Listimi u krijua me sukses dhe është në pritje të aprovimit.');
     }
 
@@ -101,6 +97,7 @@ class ListingController extends Controller
 
         $listing = Listing::where('id', $id)
             ->where('user_id', session('user_id'))
+            ->with('images')
             ->firstOrFail();
 
         $validated = $request->validate([
@@ -115,46 +112,38 @@ class ListingController extends Controller
             'images.*' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'remove_images' => 'nullable|array',
             'remove_images.*' => 'exists:listing_images,id',
-        ], [
-            'images.*.image' => 'Secila foto duhet të jetë në formatin JPG, PNG ose WEBP.',
-            'images.*.max' => 'Secila foto nuk duhet të kalojë 2MB.',
         ]);
 
-        // Handle image removal
-        if ($request->has('remove_images') && is_array($request->remove_images)) {
+        // Remove selected images
+        if ($request->filled('remove_images')) {
             foreach ($request->remove_images as $imageId) {
-                $image = ListingImage::where('id', $imageId)
-                    ->where('listing_id', $listing->id)
-                    ->first();
+                $image = $listing->images()->where('id', $imageId)->first();
                 if ($image) {
                     Storage::disk('public')->delete($image->image_path);
                     $image->delete();
                 }
             }
-            
+
             // Reorder remaining images
-            $remainingImages = $listing->images()->orderBy('order')->get();
-            foreach ($remainingImages as $index => $image) {
+            $listing->images()->get()->values()->each(function ($image, $index) {
                 $image->update(['order' => $index]);
-            }
+            });
         }
 
-        // Handle new images upload
+        // Add new images
         if ($request->hasFile('images')) {
-            $maxOrder = $listing->images()->max('order') ?? -1;
-            $order = $maxOrder + 1;
-            
-            foreach ($request->file('images') as $image) {
-                $imagePath = $image->store('listings', 'public');
-                ListingImage::create([
-                    'listing_id' => $listing->id,
-                    'image_path' => $imagePath,
-                    'order' => $order++,
+            $startOrder = ($listing->images()->max('order') ?? -1) + 1;
+
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('listings', 'public');
+                $listing->images()->create([
+                    'image_path' => $path,
+                    'order' => $startOrder + $index,
                 ]);
             }
         }
 
-        // If listing was rejected and now edited, reset to pending
+        // Reset rejected listings back to pending
         if ($listing->status === 'rejected') {
             $validated['status'] = 'pending';
             $validated['rejection_reason'] = null;
@@ -162,7 +151,8 @@ class ListingController extends Controller
 
         $listing->update($validated);
 
-        return redirect()->route('user.listings.index')
+        return redirect()
+            ->route('user.listings.index')
             ->with('success', 'Listimi u përditësua me sukses.');
     }
 
@@ -174,16 +164,17 @@ class ListingController extends Controller
 
         $listing = Listing::where('id', $id)
             ->where('user_id', session('user_id'))
+            ->with('images')
             ->firstOrFail();
 
-        // Delete all images
         foreach ($listing->images as $image) {
             Storage::disk('public')->delete($image->image_path);
         }
 
         $listing->delete();
 
-        return redirect()->route('user.listings.index')
+        return redirect()
+            ->route('user.listings.index')
             ->with('success', 'Listimi u fshi me sukses.');
     }
 }

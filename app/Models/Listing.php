@@ -46,7 +46,7 @@ class Listing extends Model
 
     public function approvedRatings()
     {
-        return $this->hasMany(Rating::class)->where('approved', true)->orderBy('created_at', 'desc');
+        return $this->hasMany(Rating::class)->where('approved', true);
     }
 
     public function images()
@@ -54,35 +54,37 @@ class Listing extends Model
         return $this->hasMany(ListingImage::class)->orderBy('order');
     }
 
-    public function updateRatingAverage()
-    {
-        $approvedRatings = $this->ratings()->where('approved', true)->get();
-        
-        if ($approvedRatings->count() > 0) {
-            $this->rating_average = $approvedRatings->avg('rating');
-            $this->rating_count = $approvedRatings->count();
-        } else {
-            $this->rating_average = 0;
-            $this->rating_count = 0;
-        }
-        
-        $this->save();
-    }
-
     /**
-     * Get the main/cover image (first image)
+     * Main image (cover) or category fallback
      */
     public function getMainImage()
     {
-        $firstImage = $this->images()->first();
-        return $firstImage ? $firstImage->getImageUrl() : null;
+        $image = $this->images()->first();
+
+        if ($image) {
+            return $image->url;
+        }
+
+        return $this->category?->image
+            ? asset('storage/' . $this->category->image)
+            : asset('images/default-listing.jpg');
     }
 
-    /**
-     * Check if listing has any images
-     */
     public function hasImages()
     {
-        return $this->images()->count() > 0;
+        return $this->images()->exists();
+    }
+
+    public function updateRatingAverage()
+    {
+        $approvedRatings = $this->ratings()->where('approved', true)->get();
+
+        $this->rating_average = $approvedRatings->count()
+            ? round($approvedRatings->avg('rating'), 1)
+            : 0;
+
+        $this->rating_count = $approvedRatings->count();
+
+        $this->save();
     }
 }
