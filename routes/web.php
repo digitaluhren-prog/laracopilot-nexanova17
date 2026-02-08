@@ -54,13 +54,17 @@ Route::put('/admin/categories/{id}', [AdminCategoryController::class, 'update'])
 Route::delete('/admin/categories/{id}', [AdminCategoryController::class, 'destroy'])->name('admin.categories.destroy');
 
 // Admin Listings
-Route::get('/admin/listings', [AdminListingController::class, 'index'])->name('admin.listings.index');
-Route::get('/admin/listings/{id}', [AdminListingController::class, 'show'])->name('admin.listings.show');
-Route::get('/admin/listings/{id}/edit', [AdminListingController::class, 'edit'])->name('admin.listings.edit');
-Route::put('/admin/listings/{id}', [AdminListingController::class, 'update'])->name('admin.listings.update');
-Route::post('/admin/listings/{id}/approve', [AdminListingController::class, 'approve'])->name('admin.listings.approve');
-Route::post('/admin/listings/{id}/reject', [AdminListingController::class, 'reject'])->name('admin.listings.reject');
-Route::delete('/admin/listings/{id}', [AdminListingController::class, 'destroy'])->name('admin.listings.destroy');
+// Admin Listings
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/listings', [AdminListingController::class, 'index'])->name('listings.index');
+    Route::get('/listings/{listing}', [AdminListingController::class, 'show'])->name('listings.show');
+    Route::get('/listings/{listing}/edit', [AdminListingController::class, 'edit'])->name('listings.edit');
+    Route::put('/listings/{listing}', [AdminListingController::class, 'update'])->name('listings.update');
+    Route::post('/listings/{listing}/approve', [AdminListingController::class, 'approve'])->name('listings.approve');
+    Route::post('/listings/{listing}/reject', [AdminListingController::class, 'reject'])->name('listings.reject');
+    Route::delete('/listings/{listing}', [AdminListingController::class, 'destroy'])->name('listings.destroy');
+});
+
 
 // Admin Users
 Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');

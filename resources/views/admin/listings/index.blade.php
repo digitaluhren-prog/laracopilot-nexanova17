@@ -90,15 +90,18 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">{{ $listing->created_at->format('d M Y') }}</td>
                         <td class="px-6 py-4 text-right text-sm font-medium space-x-3">
-                            <a href="{{ route('admin.listings.show', $listing->id) }}" class="text-blue-600 hover:underline">👁️ Shiko</a>
-                            <form action="{{ route('admin.listings.destroy', $listing->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:underline" onclick="return confirm('Je i sigurt që dëshiron ta fshish këtë listim?')">
-                                    🗑️ Fshi
-                                </button>
-                            </form>
-                        </td>
+    <a href="{{ route('admin.listings.show', $listing->id) }}" class="text-blue-600 hover:underline">
+        👁️ Shiko
+    </a>
+
+    <form action="{{ route('admin.listings.destroy', $listing->id) }}" method="POST" class="inline">
+        @csrf
+        @method('DELETE')
+        <button onclick="return confirm('Je i sigurt?')" class="text-red-600 hover:underline">
+            🗑️ Fshi
+        </button>
+    </form>
+</td>
                     </tr>
                     @empty
                     <tr>
