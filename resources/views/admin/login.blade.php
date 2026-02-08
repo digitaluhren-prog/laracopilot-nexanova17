@@ -41,7 +41,7 @@
                 </div>
             </div>
 
-            <form action="/admin/kycu" method="POST" class="space-y-6">
+            <form method="POST" action="{{ route('admin.login') }}">
                 @csrf
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
