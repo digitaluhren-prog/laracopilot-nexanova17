@@ -13,64 +13,104 @@ use App\Http\Controllers\Admin\AdminRatingController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\RatingController;
 
-// Public Routes
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/listing/{id}', [HomeController::class, 'show'])->name('listing.show');
 
-// Authentication Routes
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// User Routes
+/*
+|--------------------------------------------------------------------------
+| User Routes
+|--------------------------------------------------------------------------
+*/
 Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
-Route::get('/user/listings', [UserListingController::class, 'index'])->name('user.listings.index');
-Route::get('/user/listings/create', [UserListingController::class, 'create'])->name('user.listings.create');
-Route::post('/user/listings', [UserListingController::class, 'store'])->name('user.listings.store');
-Route::get('/user/listings/{id}/edit', [UserListingController::class, 'edit'])->name('user.listings.edit');
-Route::put('/user/listings/{id}', [UserListingController::class, 'update'])->name('user.listings.update');
-Route::delete('/user/listings/{id}', [UserListingController::class, 'destroy'])->name('user.listings.destroy');
 
-// Rating Routes
-Route::post('/listing/{id}/rating', [RatingController::class, 'store'])->name('rating.store');
-Route::delete('/rating/{id}', [RatingController::class, 'destroy'])->name('rating.destroy');
+Route::prefix('user')->name('user.')->group(function () {
+    Route::get('/listings', [UserListingController::class, 'index'])->name('listings.index');
+    Route::get('/listings/create', [UserListingController::class, 'create'])->name('listings.create');
+    Route::post('/listings', [UserListingController::class, 'store'])->name('listings.store');
+    Route::get('/listings/{listing}/edit', [UserListingController::class, 'edit'])->name('listings.edit');
+    Route::put('/listings/{listing}', [UserListingController::class, 'update'])->name('listings.update');
+    Route::delete('/listings/{listing}', [UserListingController::class, 'destroy'])->name('listings.destroy');
+});
 
-// Admin Authentication
+/*
+|--------------------------------------------------------------------------
+| Ratings
+|--------------------------------------------------------------------------
+*/
+Route::post('/listing/{listing}/rating', [RatingController::class, 'store'])->name('rating.store');
+Route::delete('/rating/{rating}', [RatingController::class, 'destroy'])->name('rating.destroy');
+
+/*
+|--------------------------------------------------------------------------
+| Admin Authentication
+|--------------------------------------------------------------------------
+*/
 Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
-// Admin Dashboard
-Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-
-// Admin Categories
-Route::get('/admin/categories', [AdminCategoryController::class, 'index'])->name('admin.categories.index');
-Route::get('/admin/categories/create', [AdminCategoryController::class, 'create'])->name('admin.categories.create');
-Route::post('/admin/categories', [AdminCategoryController::class, 'store'])->name('admin.categories.store');
-Route::get('/admin/categories/{id}/edit', [AdminCategoryController::class, 'edit'])->name('admin.categories.edit');
-Route::put('/admin/categories/{id}', [AdminCategoryController::class, 'update'])->name('admin.categories.update');
-Route::delete('/admin/categories/{id}', [AdminCategoryController::class, 'destroy'])->name('admin.categories.destroy');
-
-// Admin Listings
-// Admin Listings
+/*
+|--------------------------------------------------------------------------
+| Admin Panel (Protected Area)
+|--------------------------------------------------------------------------
+*/
 Route::prefix('admin')->name('admin.')->group(function () {
+
+    /*
+    | Dashboard
+    */
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    /*
+    | Categories
+    */
+    Route::get('/categories', [AdminCategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/create', [AdminCategoryController::class, 'create'])->name('categories.create');
+    Route::post('/categories', [AdminCategoryController::class, 'store'])->name('categories.store');
+    Route::get('/categories/{category}/edit', [AdminCategoryController::class, 'edit'])->name('categories.edit');
+    Route::put('/categories/{category}', [AdminCategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy'])->name('categories.destroy');
+
+    /*
+    | Listings
+    */
     Route::get('/listings', [AdminListingController::class, 'index'])->name('listings.index');
+    Route::get('/listings/pending', [AdminListingController::class, 'pending'])->name('listings.pending');
     Route::get('/listings/{listing}', [AdminListingController::class, 'show'])->name('listings.show');
     Route::get('/listings/{listing}/edit', [AdminListingController::class, 'edit'])->name('listings.edit');
     Route::put('/listings/{listing}', [AdminListingController::class, 'update'])->name('listings.update');
     Route::post('/listings/{listing}/approve', [AdminListingController::class, 'approve'])->name('listings.approve');
     Route::post('/listings/{listing}/reject', [AdminListingController::class, 'reject'])->name('listings.reject');
     Route::delete('/listings/{listing}', [AdminListingController::class, 'destroy'])->name('listings.destroy');
+
+    /*
+    | Users
+    */
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+    /*
+    | Ratings
+    */
+    Route::get('/ratings', [AdminRatingController::class, 'index'])->name('ratings.index');
+    Route::post('/ratings/{rating}/approve', [AdminRatingController::class, 'approve'])->name('ratings.approve');
+    Route::delete('/ratings/{rating}', [AdminRatingController::class, 'destroy'])->name('ratings.destroy');
 });
-
-
-// Admin Users
-Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
-Route::delete('/admin/users/{id}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
-
-// Admin Ratings
-Route::get('/admin/ratings', [AdminRatingController::class, 'index'])->name('admin.ratings.index');
-Route::post('/admin/ratings/{id}/approve', [AdminRatingController::class, 'approve'])->name('admin.ratings.approve');
-Route::delete('/admin/ratings/{id}', [AdminRatingController::class, 'destroy'])->name('admin.ratings.destroy');
